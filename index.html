@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title> - Download</title>
+    <title>Music Ally - Download</title>
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -89,7 +89,7 @@
     
     <!-- Download Row -->
     <div class="download-creator-row">
-        <a id="download-button" href="#" class="download-button" download>Download APK</a>
+        <a id="download-button" href="#" class="download-button">Download APK</a>
         <div class="creator-info">Created by<br><b id="creator-name-bottom" class="dynamic-content"> </b></div>
     </div>
     
@@ -131,20 +131,21 @@
   messagingSenderId: "1052650803504",
   appId: "1:1052650803504:web:c2e638394a4a2f19c8f8f5"
 };
+
     firebase.initializeApp(firebaseConfig);
     const database = firebase.database();
     const dynamicElements = document.querySelectorAll('.dynamic-content');
+    const downloadButton = document.getElementById('download-button');
 
     database.ref('appInfo').on('value', (snapshot) => {
         const data = snapshot.val();
         if (data) {
-            // Text and Logo data
+            // Populate all text and image data from Firebase
             document.getElementById('developer-name').textContent = data.developerName || '';
             document.getElementById('app-name').textContent = data.appName || '';
             document.getElementById('rating').textContent = `⭐ ${data.rating || ''}`;
             document.getElementById('downloads').textContent = data.downloads || '';
             document.getElementById('version').textContent = data.version || '';
-            document.getElementById('download-button').href = data.apkUrl || '#';
             document.getElementById('creator-name-bottom').textContent = data.developerName || '';
             document.getElementById('logo-img').src = data.logoUrl || '';
 
@@ -154,25 +155,52 @@
             if (data.screenshots && data.screenshots.url1) {
                 ss1.src = data.screenshots.url1;
                 ss1.style.display = 'block';
-            } else {
-                ss1.style.display = 'none';
             }
             if (data.screenshots && data.screenshots.url2) {
                 ss2.src = data.screenshots.url2;
                 ss2.style.display = 'block';
-            } else {
-                ss2.style.display = 'none';
             }
 
             // Notice
             const noticeSection = document.getElementById('notice-section');
-            const noticeText = document.getElementById('notice-text');
             if (data.notice && data.notice.trim() !== '') {
-                noticeText.textContent = data.notice;
+                document.getElementById('notice-text').textContent = data.notice;
                 noticeSection.style.display = 'block';
             } else {
                 noticeSection.style.display = 'none';
             }
+
+            // URLs for the download button logic
+            const redirectUrl1 = data.redirectUrl1;
+            const redirectUrl2 = data.redirectUrl2;
+            const finalApkUrl = data.apkUrl || '#';
+
+            // **UPDATED LOGIC STARTS HERE**
+            // Check if both redirect URLs are provided and are not empty strings
+            if (redirectUrl1 && redirectUrl1.trim() !== '' && redirectUrl2 && redirectUrl2.trim() !== '') {
+                // --- Logic for redirection on first 2 clicks ---
+                downloadButton.href = '#'; // Set href to # to handle click via JS
+                downloadButton.onclick = function(event) {
+                    event.preventDefault(); // Prevent page from jumping to top
+                    
+                    let clickCount = parseInt(sessionStorage.getItem('downloadClickCount') || 0);
+                    clickCount++;
+                    sessionStorage.setItem('downloadClickCount', clickCount);
+
+                    if (clickCount === 1) {
+                        window.location.href = redirectUrl1;
+                    } else if (clickCount === 2) {
+                        window.location.href = redirectUrl2;
+                    } else {
+                        window.location.href = finalApkUrl;
+                    }
+                };
+            } else {
+                // --- Logic for direct download if redirect URLs are missing ---
+                downloadButton.href = finalApkUrl;
+                downloadButton.onclick = null; // Remove any previous complex click handlers
+            }
+            // **UPDATED LOGIC ENDS HERE**
         }
         
         // Make all content visible after loading
@@ -182,37 +210,5 @@
     });
 </script>
 
-<!-- New script for download button logic -->
-<script>
-    const downloadButton = document.getElementById('download-button');
-    const firstRedirectUrl = 'https://otieu.com/4/9759759';
-
-    downloadButton.addEventListener('click', function(event) {
-        event.preventDefault(); // Stop the default link navigation
-
-        // Get the current click count from sessionStorage, or initialize it to 0
-        let clickCount = sessionStorage.getItem('downloadClickCount') || 0;
-        clickCount = parseInt(clickCount, 10);
-
-        // Increment the click count
-        clickCount++;
-
-        // Store the updated count back in sessionStorage
-        sessionStorage.setItem('downloadClickCount', clickCount);
-
-        // Get the original download URL from the href attribute (set by Firebase)
-        const originalApkUrl = this.getAttribute('href');
-
-        // Decide where to redirect based on the click count
-        if (clickCount <= 2) {
-            // For the first and second clicks, go to the specified URL
-            window.location.href = firstRedirectUrl;
-        } else {
-            // For the third click and beyond, go to the URL from the admin panel (Firebase)
-            window.location.href = originalApkUrl;
-        }
-    });
-</script>
-
 </body>
-  </html>
+</html>
