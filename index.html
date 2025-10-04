@@ -1,1 +1,71 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>App Short Link Generator Demo</title>
+<style>
+body {font-family: Arial, sans-serif; background:#f4f4f4; color:#021827; display:flex; justify-content:center; align-items:center; min-height:100vh; margin:0;}
+.container {background:#fff; padding:24px; border-radius:12px; box-shadow:0 4px 12px rgba(0,0,0,0.1); width:100%; max-width:400px;}
+h2 {margin-top:0; text-align:center;}
+input[type="file"] {width:100%; margin-bottom:12px;}
+button {width:100%; padding:10px; background:#06b6d4; border:none; border-radius:8px; color:#fff; font-weight:600; cursor:pointer; margin-bottom:12px;}
+button:hover {background:#0891b2;}
+#shortLink {word-break: break-all; background:#f1f1f1; padding:10px; border-radius:8px; text-align:center; font-size:14px;}
+</style>
+</head>
+<body>
+
+<div class="container">
+<h2>App Short Link Generator</h2>
+<input type="file" id="appFile">
+<button id="generateBtn">Generate Short Link</button>
+<div id="shortLink">Your short link will appear here</div>
+</div>
+
+<script>
+// ======= LocalStorage Key =======
+const STORAGE_KEY = 'uploadedApps';
+
+// ======= Generate Random Short ID =======
+function generateShortID(length=6){
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    let result = '';
+    for(let i=0;i<length;i++){
+        result += chars.charAt(Math.floor(Math.random()*chars.length));
+    }
+    return result;
+}
+
+// ======= Load Uploaded Apps =======
+let uploadedApps = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+
+// ======= Generate Link =======
+document.getElementById('generateBtn').addEventListener('click', ()=>{
+    const fileInput = document.getElementById('appFile');
+    if(!fileInput.files.length){
+        alert('Please select a file!');
+        return;
+    }
+    const file = fileInput.files[0];
+    const shortID = generateShortID();
+    
+    // Save in LocalStorage (for demo)
+    uploadedApps[shortID] = {
+        name: file.name,
+        size: file.size,
+        type: file.type,
+        time: new Date().toISOString()
+    };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(uploadedApps));
+
+    // Show short link (demo)
+    const link = `${window.location.origin}/app/${shortID}`;
+    document.getElementById('shortLink').textContent = link;
+    alert('Short link generated! You can copy from below.');
+});
+</script>
+
+</body>
+</html>
 
